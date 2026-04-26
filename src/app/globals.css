@@ -1,27 +1,72 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  /* outline-ring/{opacity} — used by base-nova shadcn style for focus rings */
+  .outline-ring\/20 { outline-color: color-mix(in oklch, var(--ring), transparent 80%); }
+  .outline-ring\/30 { outline-color: color-mix(in oklch, var(--ring), transparent 70%); }
+  .outline-ring\/40 { outline-color: color-mix(in oklch, var(--ring), transparent 60%); }
+  .outline-ring\/50 { outline-color: color-mix(in oklch, var(--ring), transparent 50%); }
+  /* Hex grid background for branding */
+  .hex-grid-bg {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='52' viewBox='0 0 60 52'%3E%3Cpolygon fill='none' stroke='%23F5A62315' stroke-width='1' points='30,2 58,17 58,35 30,50 2,35 2,17'/%3E%3C/svg%3E");
+    background-size: 60px 52px;
+  }
+}
+
+@layer base {
+  .theme {
+    --font-heading: var(--font-sans);
+    --font-sans: var(--font-sans);
+  }
+  :root {
+    /* DesApp dark brand theme */
+    --background: oklch(0.11 0.010 255);
+    --foreground: oklch(0.95 0 0);
+    --card: oklch(0.15 0.010 255);
+    --card-foreground: oklch(0.95 0 0);
+    --popover: oklch(0.15 0.010 255);
+    --popover-foreground: oklch(0.95 0 0);
+    --primary: oklch(0.74 0.17 71);
+    --primary-foreground: oklch(0.12 0.010 255);
+    --secondary: oklch(0.20 0.010 255);
+    --secondary-foreground: oklch(0.90 0 0);
+    --muted: oklch(0.19 0.010 255);
+    --muted-foreground: oklch(0.58 0.008 255);
+    --accent: oklch(0.74 0.17 71);
+    --accent-foreground: oklch(0.12 0.010 255);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.24 0.010 255);
+    --input: oklch(0.18 0.010 255);
+    --ring: oklch(0.74 0.17 71);
+    --chart-1: oklch(0.74 0.17 71);
+    --chart-2: oklch(0.60 0.14 71);
+    --chart-3: oklch(0.45 0.10 71);
+    --chart-4: oklch(0.35 0.08 71);
+    --chart-5: oklch(0.25 0.05 71);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.13 0.010 255);
+    --sidebar-foreground: oklch(0.95 0 0);
+    --sidebar-primary: oklch(0.74 0.17 71);
+    --sidebar-primary-foreground: oklch(0.12 0.010 255);
+    --sidebar-accent: oklch(0.20 0.010 255);
+    --sidebar-accent-foreground: oklch(0.90 0 0);
+    --sidebar-border: oklch(0.22 0.010 255);
+    --sidebar-ring: oklch(0.74 0.17 71);
+  }
+  /* No separate .dark override — the app uses dark as default */
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }

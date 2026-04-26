@@ -1,0 +1,3 @@
+ALTER TABLE webhook_workflows
+  ADD COLUMN IF NOT EXISTS total_opened BIGINT DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS total_skipped BIGINT DEFAULT 0;
