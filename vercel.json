@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/advance-sequences",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
