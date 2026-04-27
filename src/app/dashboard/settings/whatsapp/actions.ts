@@ -4,6 +4,19 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 
+export async function disconnectWhatsApp(formData: FormData) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const workspaceId = formData.get('workspace_id') as string
+  if (!workspaceId) return
+
+  await supabase.from('whatsapp_accounts').delete().eq('workspace_id', workspaceId)
+  revalidatePath('/dashboard/settings/whatsapp')
+  redirect('/dashboard/settings/whatsapp?success=WhatsApp disconnected')
+}
+
 export async function saveWhatsAppSettings(formData: FormData) {
   const supabase = createClient()
 
