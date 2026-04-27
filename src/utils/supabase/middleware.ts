@@ -3,9 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+    request: { headers: request.headers },
   })
 
   const supabase = createServerClient(
@@ -18,9 +16,7 @@ export async function updateSession(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
-          })
+          supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -29,10 +25,20 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
+  let user = null
   try {
-    await supabase.auth.getUser()
+    const { data } = await supabase.auth.getUser()
+    user = data.user
   } catch {
     // Supabase unavailable — continue without session refresh
+  }
+
+  // Redirect unauthenticated users away from protected routes
+  const { pathname } = request.nextUrl
+  if (!user && pathname.startsWith('/dashboard')) {
+    const loginUrl = request.nextUrl.clone()
+    loginUrl.pathname = '/login'
+    return NextResponse.redirect(loginUrl)
   }
 
   return supabaseResponse

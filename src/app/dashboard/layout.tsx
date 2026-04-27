@@ -1,16 +1,18 @@
 import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
 import Image from 'next/image'
 import { LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { logout } from './actions'
 import SidebarNav from './SidebarNav'
+import { Suspense } from 'react'
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+async function UserEmail() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  return <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+}
 
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Sidebar */}
@@ -41,7 +43,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {/* User / Logout */}
         <div className="px-3 py-4 space-y-1">
           <div className="px-3 py-2">
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            <Suspense fallback={<p className="text-xs text-muted-foreground/40">...</p>}>
+              <UserEmail />
+            </Suspense>
           </div>
           <form action={logout}>
             <Button
