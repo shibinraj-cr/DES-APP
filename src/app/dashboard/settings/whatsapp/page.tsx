@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { Settings, ShieldCheck } from 'lucide-react'
 
 export default async function WhatsAppSettingsPage({
@@ -23,6 +24,11 @@ export default async function WhatsAppSettingsPage({
     .limit(1)
 
   const workspaceId = members?.[0]?.workspace_id
+
+  const headersList = headers()
+  const host = headersList.get('x-forwarded-host') || headersList.get('host') || 'your-domain.com'
+  const protocol = headersList.get('x-forwarded-proto') || 'https'
+  const webhookUrl = `${protocol}://${host}/api/webhooks/whatsapp`
 
   if (!workspaceId) {
     return (
@@ -134,7 +140,7 @@ export default async function WhatsAppSettingsPage({
           <div className="mt-4 bg-card border border-border rounded-xl p-4">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Webhook Configuration</p>
             <p className="text-sm text-foreground font-mono bg-secondary/50 rounded-lg px-3 py-2 break-all">
-              https://your-domain.com/api/webhooks/whatsapp
+              {webhookUrl}
             </p>
             <p className="text-xs text-muted-foreground mt-2">Set this URL in your Meta App webhook settings with your <code className="text-primary/80">WHATSAPP_WEBHOOK_VERIFY_TOKEN</code></p>
           </div>
