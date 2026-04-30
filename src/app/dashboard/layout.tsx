@@ -6,10 +6,16 @@ import { logout } from './actions'
 import SidebarNav from './SidebarNav'
 import { Suspense } from 'react'
 
+export const dynamic = 'force-dynamic'
+
 async function UserEmail() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    return <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+  } catch {
+    return <p className="text-xs text-muted-foreground/40">—</p>
+  }
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

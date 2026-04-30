@@ -31,53 +31,58 @@ export async function saveTemplateDraft(data: {
   const { supabase, workspaceId } = await getWorkspaceId()
   if (!workspaceId) redirect('/onboarding')
 
-  const components: unknown[] = []
+  try {
+    const components: unknown[] = []
 
-  if (data.headerType !== 'NONE') {
-    if (data.headerType === 'TEXT') {
-      const comp: Record<string, unknown> = { type: 'HEADER', format: 'TEXT', text: data.headerText }
-      if (data.headerVarSample) comp.example = { header_text: [data.headerVarSample] }
-      components.push(comp)
-    } else {
-      components.push({ type: 'HEADER', format: data.headerType, example: { header_handle: [data.headerMediaUrl || ''] } })
+    if (data.headerType !== 'NONE') {
+      if (data.headerType === 'TEXT') {
+        const comp: Record<string, unknown> = { type: 'HEADER', format: 'TEXT', text: data.headerText }
+        if (data.headerVarSample) comp.example = { header_text: [data.headerVarSample] }
+        components.push(comp)
+      } else {
+        components.push({ type: 'HEADER', format: data.headerType, example: { header_handle: [data.headerMediaUrl || ''] } })
+      }
     }
-  }
 
-  if (data.body) {
-    const comp: Record<string, unknown> = { type: 'BODY', text: data.body }
-    const samples = data.bodyVarSamples.filter(Boolean)
-    if (samples.length) comp.example = { body_text: [samples] }
-    components.push(comp)
-  }
+    if (data.body) {
+      const comp: Record<string, unknown> = { type: 'BODY', text: data.body }
+      const samples = data.bodyVarSamples.filter(Boolean)
+      if (samples.length) comp.example = { body_text: [samples] }
+      components.push(comp)
+    }
 
-  if (data.footer) components.push({ type: 'FOOTER', text: data.footer })
+    if (data.footer) components.push({ type: 'FOOTER', text: data.footer })
 
-  if ((data.buttons as unknown[]).length) {
-    components.push({ type: 'BUTTONS', buttons: data.buttons })
-  }
+    if ((data.buttons as unknown[]).length) {
+      components.push({ type: 'BUTTONS', buttons: data.buttons })
+    }
 
-  const payload = {
-    workspace_id: workspaceId,
-    name: data.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, ''),
-    category: data.category,
-    language: data.language,
-    components,
-    header_type: data.headerType,
-    footer: data.footer,
-    buttons: data.buttons,
-    status: 'draft',
-  }
+    const payload = {
+      workspace_id: workspaceId,
+      name: data.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, ''),
+      category: data.category,
+      language: data.language,
+      components,
+      header_type: data.headerType,
+      footer: data.footer,
+      buttons: data.buttons,
+      status: 'draft',
+    }
 
-  if (data.id) {
-    const { error } = await supabase.from('templates').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', data.id)
-    if (error) throw new Error(error.message)
-    revalidatePath('/dashboard/templates')
-    return { id: data.id }
-  } else {
-    const { data: row, error } = await supabase.from('templates').insert(payload).select('id').single()
-    if (error) throw new Error(error.message)
-    revalidatePath('/dashboard/templates')
-    return { id: row.id }
+    if (data.id) {
+      const { error } = await supabase.from('templates').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', data.id)
+      if (error) throw new Error(error.message)
+      revalidatePath('/dashboard/templates')
+      return { id: data.id }
+    } else {
+      const { data: row, error } = await supabase.from('templates').insert(payload).select('id').single()
+      if (error) throw new Error(error.message)
+      revalidatePath('/dashboard/templates')
+      return { id: row!.id }
+    }
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
+    throw new Error(err?.message ?? 'Failed to save template')
   }
 }
 
