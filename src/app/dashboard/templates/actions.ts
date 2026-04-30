@@ -193,6 +193,19 @@ export async function refreshTemplateStatus(templateId: string) {
   revalidatePath('/dashboard/templates')
 }
 
+// Form-action-safe wrapper: redirects with error instead of throwing (for list page buttons)
+export async function submitTemplateFormAction(formData: FormData) {
+  const templateId = formData.get('templateId') as string
+  if (!templateId) redirect('/dashboard/templates?error=Missing+template+ID')
+  try {
+    await submitTemplateToMeta(templateId)
+    redirect('/dashboard/templates?success=Template+submitted+to+Meta+for+review')
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
+    redirect(`/dashboard/templates?error=${encodeURIComponent(err?.message ?? 'Failed to submit')}`)
+  }
+}
+
 export async function deleteTemplate(templateId: string) {
   const { supabase } = await getWorkspaceId()
   await supabase.from('templates').delete().eq('id', templateId)

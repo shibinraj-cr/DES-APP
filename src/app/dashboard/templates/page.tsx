@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { FileText, Plus, RefreshCw, Send, Trash2, AlertCircle, CheckCircle, Clock, XCircle, Edit } from 'lucide-react'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
-import { refreshTemplateStatus, deleteTemplate, submitTemplateToMeta } from './actions'
+import { refreshTemplateStatus, deleteTemplate, submitTemplateFormAction } from './actions'
 
 const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle; color: string; bg: string; label: string }> = {
   draft:    { icon: Edit,         color: 'text-muted-foreground', bg: 'bg-secondary',       label: 'Draft' },
@@ -15,7 +15,7 @@ const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle; color: string; b
 export default async function TemplatesPage({
   searchParams,
 }: {
-  searchParams: { status?: string; category?: string }
+  searchParams: { status?: string; category?: string; error?: string; success?: string }
 }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -62,6 +62,18 @@ export default async function TemplatesPage({
       </div>
 
       <div className="p-6 space-y-5">
+        {searchParams.error && (
+          <div className="flex items-start gap-2 bg-red-400/10 border border-red-400/30 rounded-lg px-4 py-3">
+            <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-400">{searchParams.error}</p>
+          </div>
+        )}
+        {searchParams.success && (
+          <div className="flex items-center gap-2 bg-green-400/10 border border-green-400/30 rounded-lg px-4 py-3">
+            <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
+            <p className="text-sm text-green-400">{searchParams.success}</p>
+          </div>
+        )}
         {/* Status filter tabs */}
         <div className="flex flex-wrap gap-2">
           {[
@@ -149,7 +161,8 @@ export default async function TemplatesPage({
                             <Edit className="h-3.5 w-3.5" />
                           </Link>
                           {(status === 'draft' || status === 'rejected') && (
-                            <form action={submitTemplateToMeta.bind(null, t.id)}>
+                            <form action={submitTemplateFormAction}>
+                              <input type="hidden" name="templateId" value={t.id} />
                               <button type="submit" title="Submit to Meta"
                                 className="p-1.5 rounded-lg hover:bg-secondary/60 text-muted-foreground hover:text-green-400 transition-colors">
                                 <Send className="h-3.5 w-3.5" />
