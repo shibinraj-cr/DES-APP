@@ -85,64 +85,70 @@ export async function submitTemplateToMeta(templateId: string) {
   const { supabase, workspaceId } = await getWorkspaceId()
   if (!workspaceId) redirect('/onboarding')
 
-  const { data: template } = await supabase
-    .from('templates')
-    .select('name, category, language, components')
-    .eq('id', templateId)
-    .single()
+  try {
+    const { data: template } = await supabase
+      .from('templates')
+      .select('name, category, language, components')
+      .eq('id', templateId)
+      .single()
 
-  if (!template) throw new Error('Template not found')
+    if (!template) throw new Error('Template not found')
 
-  const adminClient = getAdminClient()
-  const { data: creds } = await adminClient.rpc('get_whatsapp_credentials', {
-    p_workspace_id: workspaceId,
-    p_encryption_key: process.env.WA_TOKEN_ENCRYPTION_KEY!,
-  })
+    const adminClient = getAdminClient()
+    const { data: creds, error: credsError } = await adminClient.rpc('get_whatsapp_credentials', {
+      p_workspace_id: workspaceId,
+      p_encryption_key: process.env.WA_TOKEN_ENCRYPTION_KEY!,
+    })
 
-  if (!creds?.[0]) throw new Error('WhatsApp not configured')
+    if (credsError) throw new Error(`Credentials error: ${credsError.message}`)
+    if (!creds?.[0]) throw new Error('WhatsApp not configured — go to Settings and save your credentials first')
 
-  const { access_token } = creds[0]
-  const { data: waAccount } = await adminClient
-    .from('whatsapp_accounts')
-    .select('waba_id')
-    .eq('workspace_id', workspaceId)
-    .single()
+    const { access_token } = creds[0]
+    const { data: waAccount } = await adminClient
+      .from('whatsapp_accounts')
+      .select('waba_id')
+      .eq('workspace_id', workspaceId)
+      .single()
 
-  if (!waAccount?.waba_id) throw new Error('WhatsApp Business Account ID not found')
+    if (!waAccount?.waba_id) throw new Error('WhatsApp Business Account ID not found')
 
-  const res = await fetch(
-    `https://graph.facebook.com/v20.0/${waAccount.waba_id}/message_templates`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${access_token}` },
-      body: JSON.stringify({
-        name: template.name,
-        category: template.category,
-        language: template.language,
-        components: template.components,
-      }),
+    const res = await fetch(
+      `https://graph.facebook.com/v20.0/${waAccount.waba_id}/message_templates`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${access_token}` },
+        body: JSON.stringify({
+          name: template.name,
+          category: template.category,
+          language: template.language,
+          components: template.components,
+        }),
+      }
+    )
+
+    const result = await res.json()
+
+    if (!res.ok) {
+      await supabase.from('templates').update({
+        status: 'rejected',
+        rejection_reason: result.error?.message || 'Meta rejected the template',
+        updated_at: new Date().toISOString(),
+      }).eq('id', templateId)
+      throw new Error(result.error?.message || `Meta API error (${res.status})`)
     }
-  )
 
-  const result = await res.json()
-
-  if (!res.ok) {
     await supabase.from('templates').update({
-      status: 'rejected',
-      rejection_reason: result.error?.message || 'Meta rejected the template',
+      meta_template_id: result.id,
+      status: 'pending',
+      rejection_reason: null,
       updated_at: new Date().toISOString(),
     }).eq('id', templateId)
-    throw new Error(result.error?.message || 'Meta API error')
+
+    revalidatePath('/dashboard/templates')
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
+    throw new Error(err?.message ?? 'Unexpected error submitting template')
   }
-
-  await supabase.from('templates').update({
-    meta_template_id: result.id,
-    status: 'pending',
-    rejection_reason: null,
-    updated_at: new Date().toISOString(),
-  }).eq('id', templateId)
-
-  revalidatePath('/dashboard/templates')
 }
 
 export async function refreshTemplateStatus(templateId: string) {

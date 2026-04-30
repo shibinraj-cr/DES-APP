@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { getAdminClient } from '@/utils/supabase/admin'
 import { redirect } from 'next/navigation'
 import { UserCog, Crown, Shield, User } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
@@ -39,7 +40,7 @@ export default async function UsersPage({
   let emailMap: Record<string, string> = {}
 
   if (userIds.length > 0) {
-    const adminClient = createClient()
+    const adminClient = getAdminClient()
     for (const uid of userIds) {
       const { data } = await adminClient.auth.admin.getUserById(uid).catch(() => ({ data: null }))
       if (data?.user?.email) emailMap[uid] = data.user.email

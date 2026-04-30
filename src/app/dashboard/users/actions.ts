@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { getAdminClient } from '@/utils/supabase/admin'
 import { redirect } from 'next/navigation'
 
 export async function inviteUser(formData: FormData) {
@@ -23,7 +24,8 @@ export async function inviteUser(formData: FormData) {
     redirect('/dashboard/users?error=You+do+not+have+permission+to+invite+users')
   }
 
-  const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
+  const adminClient = getAdminClient()
+  const { error } = await adminClient.auth.admin.inviteUserByEmail(email, {
     data: { workspace_id: myMembership.workspace_id, role: 'agent' },
   })
 
